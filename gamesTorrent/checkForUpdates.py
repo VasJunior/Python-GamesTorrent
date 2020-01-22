@@ -1,30 +1,15 @@
 import pymysql
-from urllib.request import urlopen,Request
+from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup
 import re
 
-reqHeaders = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) '
-                            'AppleWebKit/537.11 (KHTML, like Gecko) '
-                            'Chrome/23.0.1271.64 Safari/537.11',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-              'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-              'Accept-Encoding': 'none',
-              'Accept-Language': 'en-US,en;q=0.8',
-              'Connection': 'keep-alive'}
-
-conn = pymysql.connect(host='127.0.0.1',
-                       user='root',
-                       passwd='',
-                       db='mysql',
-                       charset='utf8')
-
-def makeSoup(innerCont):
+def makeSoup(innerCont, reqHeaders):
     req = Request(url=f'https://torrentgamespc.net/category/iso/page/{innerCont}/', headers=reqHeaders)
     url = urlopen(req)
     soup = BeautifulSoup(url, 'lxml')
     return soup
 
-def makeGameSoup(page):
+def makeGameSoup(page, reqHeaders):
     req = Request(url=page, headers=reqHeaders)
     url = urlopen(req) #abre o Html do request acima.
     soup = BeautifulSoup(url, 'lxml') #faz uma sopa do Html acima.
@@ -49,42 +34,64 @@ def getMag(soup):
         link = m.attrs['href']
     return link
 
-def store(title,url,mag):
+def store(title,url,mag, cur):
     cur.execute(f'INSERT INTO todosjogos (title,mag,url) VALUES ("{title}","{mag}","{url}");')
     cur.connection.commit()
     print(f'Adicionado {title}, no seu DB')
 
-def getPages():
+def getPages(reqHeaders, cur, games):
     innerCont = 1
-    while innerCont <= getLastPage():
+    while innerCont <= getLastPage(reqHeaders):
         print(f'Minerando pagina {innerCont}')
-        soup = makeSoup(innerCont)
+        soup = makeSoup(innerCont, reqHeaders)
         archive = soup.find('div', class_='post-listing archive-box')
         postBox = archive.find_all('h2', class_='post-box-title')
         for post in postBox:
             a = post.find('a')
             page = a.attrs['href']
             if page not in games:
-                innerSoup = makeGameSoup(page)
+                innerSoup = makeGameSoup(page, reqHeaders)
                 title = getTitle(innerSoup)
                 mag = getMag(innerSoup)
-                store(title,page,mag)
+                store(title,page,mag, cur)
             else:
                 print('Já possui esse Jogo')
         innerCont += 1
-def getLastPage():
-    soup = makeSoup(1)
+def getLastPage(reqHeaders):
+    soup = makeSoup(1,reqHeaders)
     last = soup.find('a', class_='last')
     conteudo = last.attrs['href']
     return int(re.sub('[^0-9]', '', conteudo))
 
-cur = conn.cursor()
-cur.execute('USE jogostorrent')
-cur.execute('SELECT url FROM todosjogos')
-pages = cur.fetchall()
-games = set()
-for page in pages:
-    games.add(page[0])
-getPages()
-cur.close()
-conn.close()
+
+def main():
+
+    reqHeaders = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) '
+                                'AppleWebKit/537.11 (KHTML, like Gecko) '
+                                'Chrome/23.0.1271.64 Safari/537.11',
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                  'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+                  'Accept-Encoding': 'none',
+                  'Accept-Language': 'en-US,en;q=0.8',
+                  'Connection': 'keep-alive'}
+
+    conn = pymysql.connect(host='127.0.0.1',
+                           user='root',
+                           passwd='',
+                           db='mysql',
+                           charset='utf8')
+
+    cur = conn.cursor()
+    cur.execute('USE jogostorrent')
+    cur.execute('SELECT url FROM todosjogos')
+    pages = cur.fetchall()
+    games = set()
+    for page in pages:
+        games.add(page[0])
+    getPages(reqHeaders, cur, games)
+    cur.close()
+    conn.close()
+
+
+if __name__ == "__main__":
+    main()
