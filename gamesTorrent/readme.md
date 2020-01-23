@@ -1,7 +1,7 @@
 # GAMES TORRENT
   A data collector algorithm, it will collect magnetic links from a specific torrent game site;
   
-// Modules: <a href="">click here</a> to download my venv
+// Modules: <a href="https://mega.nz/#!PdVBQQrB!CpY3g7vpVxQDQ5VtLxxxgjXKxSrMIbMiocSnDm8scDk">click here</a> to download my venv
 
 * pymysql 
 
