@@ -55,7 +55,7 @@ def getPages(reqHeaders, cur, games):
                 mag = getMag(innerSoup)
                 store(title,page,mag, cur)
             else:
-                print('Já possui esse Jogo')
+                print(f'({getTitle(makeGameSoup(page,reqHeaders))}) - Já possui esse Jogo')
         innerCont += 1
 def getLastPage(reqHeaders):
     soup = makeSoup(1,reqHeaders)
