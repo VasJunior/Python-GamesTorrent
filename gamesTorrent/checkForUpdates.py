@@ -16,15 +16,22 @@ def makeGameSoup(page, reqHeaders):
     return soup #retorna a sopa.
 
 def getTitle(soup):
-    title = soup.find('title')
-    title = str(title)
-    if title.count('-') > 1:
+    title = soup.find('title') # get the element <title>, as we only have 1 of that, there shouldn't have problem;
+    #Ex: <title>MechWarrior 5 Mercenaries - PC 2019 CODEX - Games Jogos ISO 2019 2020</title>
+    title = str(title) # turns title into a string, and puts it in a var
+    if title.count('-') > 1: # if the count of '-' are more than 1
         try:
-            title = title[title.index('-',0,17)+2:title.index('-',18)-1]
+            t = title[title.index('-',0,17)+2:title.index('-',18)-1] # cut title between the first '-' and the second '-'
+            # but here we have a problem: in the case of title be like that: if the title is too short the games titles will be imprecise
+            # in this case 'OSK - PC 2019 SKIDROW - Games Jogos ISO 2019 2020'; title will be like that 'PC 2019 SKIDROW'
+            if t.__contains__("PC"): # verify if the problem above occurred
+                title = title[title.index('>') + 1:title.index('-') - 1] # make the short verification
+            else:
+                title = t # if the problem not occurred title receive t
         except:
-            title = title[title.index('>') + 1:title.index('-') - 1]
-    else:
-        title = title[title.index('>') + 1:title.index('-') - 1]
+            title = title[title.index('>') + 1:title.index('-') - 1] # short verification
+    else: # in this case we have '-' more than one time
+        title = title[title.index('>') + 1:title.index('-') - 1] # cut title in '>' of element <title>, and cut on the first '-'
     return title
 
 def getMag(soup):
