@@ -64,6 +64,7 @@ def getPages(reqHeaders, cur, games):
             else:
                 print(f'({getTitle(makeGameSoup(page,reqHeaders))}) - Já possui esse Jogo')
         innerCont += 1
+        
 def getLastPage(reqHeaders):
     soup = makeSoup(1,reqHeaders)
     last = soup.find('a', class_='last')
